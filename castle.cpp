@@ -92,12 +92,114 @@ void printMatrix(int n, int m) {
         cout<<endl;
     }
 }
+int numberOfRomms;
+int searchNumberOfRooms(int xx, int yy) {
+    if (visit[xx][yy]) {
+        return 0;
+    }
+    // cout<<xx<<"   "<<yy<<endl;
+    int ret = -1;
+    int sum = input[xx][yy];
+    visit[xx][yy] = 1;
+    for(int i = 0; i<x[sum].size(); i++) {
+        ret = max(1 + searchNumberOfRooms(xx + x[sum][i], yy + y[sum][i]), ret);
+    }
+    // cout<<ret<<endl;
+    return ret;
+}
+int space;
+int n,m;
+int countSpace(int xx,int yy) {
+    if (xx < 0 || yy < 0 || xx >=m || yy >= n){
+        return 0;
+    }
+    if (visit[xx][yy]) {
+        return 0;
+    }
+    space++;
+    // cout<<xx<<"   "<<yy<<"  # "<<space<<endl;
+    int ret = +1;
+    int sum = input[xx][yy];
+    visit[xx][yy] = 1;
+    for(int i = 0; i<x[sum].size(); i++) {
+        countSpace(xx + x[sum][i], yy + y[sum][i]);
+    }
+    return ret;
+}
+struct wallBreakPoint {
+    int x,y;
+    string direction;
+} pointOn;
+int mxSizewithBreakWall;
+int breakWall(int xx, int yy) {
+    int sum = input[xx][yy];
+    for(int i = 0; i<4;i++) {
+        bool skip = false;
+        int nxtX = xx + xD[i], nxtY = yy + yD[i];
+        for(int j = 0; j<x[sum].size(); j++) {
+            if (x[sum][j] == xD[i] && y[sum][j] == yD[i]) {
+                skip = true;
+            }
+        }
+        for(int j = 0; j<y[sum].size(); j++) {
+            if (y[sum][j] == yD[i] && yD[i] != 0) {
+                skip = true;
+            }
+        }
+        if (nxtX < 0 || nxtY < 0 || nxtX >= m || nxtY >= n) {
+            skip = true;
+        }
+        if (skip) {
+            continue;
+        }
+        // if (x[sum])
+        // x[sum].pb(xD[i]);
+        // y[sum].pb(yD[i]);
+        mem(visit, 0);
+        cout<<xx<<" "<<yy<<endl;
+        cout<<"````````````````\n";
+        space = 0;
+        if (xx == 2 && yy == 3) {
+            for(int l = 0; l<x[sum].size(); l++) {
+                cout<<"X: "<<x[sum][l]<<" Y: "<<y[sum][l]<<endl;
+            }
+        }
+        countSpace(xx, yy);
+        countSpace(nxtX, nxtY);
+        cout<<"space = "<<space<<endl;
+        if (space > mxSizewithBreakWall) {
+            cout<<xx<<" "<<yy<<endl;
+            mxSizewithBreakWall = space;
+            pointOn.x = xx;
+            pointOn.y = yy;
+            if (xD[i] == -1) {
+                pointOn.direction = "N";
+            } else if (xD[i] == +1) {
+                pointOn.direction = "S";
+            } else if (yD[i] == -1) {
+                pointOn.direction = "W";
+            } else if(yD[i] == +1) {
+                pointOn.direction = "E";
+            }
+        }
 
+        // printVector();
+        for(int l = 0; l<x[sum].size(); l++) {
+            // cout<<"X: "<<x[sum][l]<<" Y: "<<y[sum][l]<<endl;
+        }
+        cout<<"'''''''''''''''''''\n";
+        // x[sum].erase(x[sum].begin() + x[sum].size() - 1);
+        // y[sum].erase(y[sum].begin() + y[sum].size() - 1);
+        // cout<<"===="<<ret<<endl;
+    }
+    return mxSizewithBreakWall;
+}
 int main()
 {
     ofstream fout ("castle.out");
     ifstream fin ("castle.in");
     preProcess();
+    numberOfRomms = 0;
 //    for(int i = 0; i<=15; i++) {
 //        if (x[i].size() && y[i].size()) {
 //            for(int j = 0; j<x[i].size(); j++) {
@@ -106,12 +208,45 @@ int main()
 //            cout<<"==================="<<endl;;
 //        }
 //    }
-    int n,m;
     fin>>n>>m;
     for(int i = 0; i<m; i++) {
         for(int j = 0; j<n; j++) {
             fin>>input[i][j];
         }
     }
+    x[0].pb(-1);
+    x[0].pb(+1);
+    y[0].pb(+0);
+    y[0].pb(+0);
+
+    x[0].pb(+0);
+    x[0].pb(+0);
+    y[0].pb(-1);
+    y[0].pb(+1);
+
+    int largestRoom = -1;
+    for(int i = 0; i<m; i++) {
+        for(int j = 0; j<n; j++) {
+            // fin>>input[i][j];
+            if (!visit[i][j]) {
+                numberOfRomms++;
+                // largestRoom = max(1 + searchNumberOfRooms(i,j), largestRoom);
+                space = 0;
+                countSpace(i,j);
+                largestRoom = max(largestRoom, space);
+            }
+        }
+    }
+    fout<<numberOfRomms<<endl;
+    fout<<largestRoom<<endl;
+    int roomAreaAfterBreak = largestRoom;
+    mxSizewithBreakWall = -1;
+    for (int j = 0; j<n; j++) {
+        for(int i = m - 1; i >= 0; i--) {
+            roomAreaAfterBreak = max(breakWall(i,j), roomAreaAfterBreak);
+        }
+    }
+    fout<<roomAreaAfterBreak<<endl;
+    fout<<pointOn.x + 1<<" "<<pointOn.y + 1<<" "<<pointOn.direction<<endl;
     return 0;
 }
